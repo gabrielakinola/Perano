@@ -26,6 +26,11 @@ const userSchema = new Schema(
     dateOfBirth: {
       type: Date,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    
+    },
   },
   { timestamps: true }
 );
