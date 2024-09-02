@@ -22,8 +22,7 @@ app.use("/api/v1/auth", authRoutes);
 // app.put("/get-user/:userId", (req, res) => {
 //   const { userId } = req.params;
 
-//   const updatedUser = await User.findByIdAndUpdate(userId,{
-//     fullName:
+//   const updatedUser = await User.findByIdAndUpdate fullName:
 //   })
 // });
 

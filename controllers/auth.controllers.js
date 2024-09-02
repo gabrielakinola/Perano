@@ -2,8 +2,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
 const createUser = async (req, res) => {
-  console.log(req.body);
-  // const { fullName, email, password, confirmPassword, gender } = req.body;
+  const { fullName, email, password, confirmPassword, gender } = req.body;
 
   // //   Check if password = comnfirmPassword
   // if (password !== confirmPassword) {
