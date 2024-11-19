@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import { sendVerificationEmail } from "../helpers/nodemailer.js";
 import bcrypt from "bcryptjs";
-import { generateVerifyToken } from "../helpers/token.js";
+import { generateVerifyToken, generateAccessToken } from "../helpers/token.js";
 import jwt from "jsonwebtoken";
 import Otp from "../models/otp.model.js";
 
@@ -52,12 +52,12 @@ const createUser = async (req, res) => {
 // Thia controller takes the otp from client confirms it and updates the isEmailVerified prop of user
 const verifyEmail = async (req, res) => {
   const { otp } = req.body;
-  console.log(otp);
   // Extract token from req header
   let token = null;
   const authHeader = req.headers["authorization"];
-  console.log(req.headers);
+
   if (authHeader && authHeader.startsWith("Bearer ")) {
+    console.log(authHeader);
     token = authHeader.split(" ")[1];
   }
   if (!token) {
@@ -80,12 +80,61 @@ const verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "otp has expired" });
     }
     if (userOtp.otp === otp) {
-      await User.findByIdAndUpdate(payload._id, { isEmailVerified: true });
-      res.status(200).json({ message: "user email verified" });
+      const user = await User.findByIdAndUpdate(payload._id, {
+        isEmailVerified: true,
+      });
+      // Generate userPayload and send access token
+      await Otp.findByIdAndDelete(userOtp._id);
+      const userPayload = {
+        _id: user._id,
+        email: user.email,
+      };
+      const accessToken = generateAccessToken(userPayload);
+      res.status(200).json({ message: "user email verified", accessToken });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export { createUser, verifyEmail };
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    // Compare Passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "invalid credentials" });
+    }
+    // Check if user email is verified. If not, send verification email
+    if (!user.isEmailVerified) {
+      // Send verification email again
+      await sendVerificationEmail(user);
+
+      //Generate and Send Verification Token as response to client
+      const userPayload = {
+        _id: user._id,
+        email: user.email,
+      };
+      const verificationToken = generateVerifyToken(userPayload);
+      return res
+        .status(200)
+        .json({ message: "Verification Email sent", verificationToken });
+    }
+    // Generate userPayload and send access token
+    const userPayload = {
+      _id: user._id,
+      email: user.email,
+    };
+    const accessToken = generateAccessToken(userPayload);
+    res.status(200).json({ message: "login successful", accessToken });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { createUser, verifyEmail, loginUser };

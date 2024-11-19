@@ -7,4 +7,11 @@ const generateVerifyToken = (userPayload) => {
   return token;
 };
 
-export { generateVerifyToken };
+const generateAccessToken = (userPayload) => {
+  const token = jwt.sign(userPayload, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: "24h",
+  });
+  return token;
+};
+
+export { generateVerifyToken, generateAccessToken };

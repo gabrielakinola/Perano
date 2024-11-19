@@ -9,8 +9,6 @@ const sendVerificationEmail = async (user) => {
       pass: process.env.PASSWORD,
     },
   });
-  console.log(process.env.EMAIL);
-  console.log(process.env.PASSWORD);
 
   // Call Generate Otp Function
   const returnedOtp = await generateOtp(user._id, "email-verify");
